@@ -9,6 +9,7 @@ import net.m127.vpm.repo.jpa.entity.Package;
 import net.m127.vpm.repo.json.PackageJson;
 import net.m127.vpm.repo.json.RepoListing;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -36,6 +37,8 @@ public class VPMServiceImpl implements VPMService {
     protected PackageVersionRepository packageVersions;
     @Autowired
     protected FileService fileService;
+    @Value("${automatic.package.creation}")
+    protected boolean automaticPackageCreation;
     
     @Override
     public User getCurrentUser() {
@@ -100,10 +103,19 @@ public class VPMServiceImpl implements VPMService {
     @Override
     public PackageJson uploadPackage(MultipartFile file) throws IOException, AccessDeniedException {
         FileService.ParsedFileUpload parsed = fileService.parseFileUpload(file);
+        Package pkg;
         if(!packages.existsById(parsed.parsedJson().name())) {
-            throw new FileNotFoundException("Package not registered");
+            if(!automaticPackageCreation) throw new FileNotFoundException("Package not registered");
+            pkg = new Package(
+                parsed.parsedJson().name(),
+                getCurrentUser(),
+                parsed.parsedJson().displayName(),
+                parsed.parsedJson().description()
+            );
+            packages.save(pkg);
+        } else {
+            pkg = packages.getReferenceById(parsed.parsedJson().name());
         }
-        Package pkg = packages.getReferenceById(parsed.parsedJson().name());
         if (!pkg.getAuthor().equals(getCurrentUser())) {
             throw new AccessDeniedException("Package not owned by User");
         }

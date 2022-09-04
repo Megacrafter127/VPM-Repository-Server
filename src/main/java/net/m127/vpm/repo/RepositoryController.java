@@ -25,13 +25,13 @@ import java.util.zip.ZipException;
 
 @RestController
 @RequestMapping("/vpm")
-public class RestAPI {
+public class RepositoryController {
     @Autowired
     protected VPMService vpmService;
     @Autowired
     protected FileService fileService;
     
-    private final Logger logger = LoggerFactory.getLogger(RestAPI.class);
+    private final Logger logger = LoggerFactory.getLogger(RepositoryController.class);
     
     @GetMapping("/index.json")
     public RepoListing getIndex(HttpServletRequest request) {
