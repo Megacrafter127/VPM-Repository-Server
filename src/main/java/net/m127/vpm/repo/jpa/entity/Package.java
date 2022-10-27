@@ -34,6 +34,6 @@ public class Package {
     private String description;
     
     @OneToMany(mappedBy = "pkg",targetEntity = PackageVersion.class)
-    @OrderBy("version DESC")
+    @OrderBy("version_major DESC, version_minor DESC, version_revision DESC")
     private List<PackageVersion> versions;
 }
