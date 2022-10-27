@@ -15,7 +15,6 @@ import org.springframework.web.bind.annotation.*;
 
 import javax.servlet.http.HttpServletRequest;
 import java.io.IOException;
-import java.io.InputStream;
 import java.net.URI;
 import java.util.Optional;
 
@@ -52,12 +51,12 @@ public class VpmRepositoryController {
     public ResponseEntity<PackageJson> uploadVersion(
         HttpServletRequest request,
         @CookieValue(name = UserController.LOGIN_COOKIE, required = false) String token,
-        @RequestBody InputStream file
+        @RequestBody Resource file
     ) {
-        try{
-            PackageJson result = vpmService.uploadPackage(token, request.getRequestURI(), file);
+        try {
+            PackageJson result = vpmService.uploadPackage(token, request.getRequestURI(), file.getInputStream());
             return ResponseEntity.created(URI.create(result.url())).body(result);
-        } catch(AccessDeniedException ex) {
+        } catch (AccessDeniedException ex) {
             return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
         } catch (NoSuchUserException e) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
