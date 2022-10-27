@@ -4,6 +4,7 @@ import lombok.RequiredArgsConstructor;
 import net.m127.vpm.repo.json.PackageJson;
 import net.m127.vpm.repo.json.PackageMetaData;
 import net.m127.vpm.repo.json.RepoListing;
+import net.m127.vpm.repo.service.NoSuchUserException;
 import net.m127.vpm.repo.service.VPMService;
 import org.springframework.core.io.ByteArrayResource;
 import org.springframework.core.io.Resource;
@@ -46,9 +47,13 @@ public class VpmRepositoryController {
     }
     
     @PostMapping("/packages")
-    public ResponseEntity<?> uploadVersion(HttpServletRequest request, @RequestBody byte[] file) {
+    public ResponseEntity<?> uploadVersion(
+        HttpServletRequest request,
+        @CookieValue(name = UserController.LOGIN_COOKIE, required = false) String token,
+        @RequestBody byte[] file
+    ) {
         try{
-            PackageJson result = vpmService.uploadPackage(file);
+            PackageJson result = vpmService.uploadPackage(token, file);
             return ResponseEntity.created(
                 URI.create(String.format(
                     "%s/%s/%s.zip",
@@ -59,6 +64,8 @@ public class VpmRepositoryController {
             ).build();
         } catch(AccessDeniedException ex) {
             return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+        } catch (NoSuchUserException e) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
         }
     }
     

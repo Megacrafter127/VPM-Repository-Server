@@ -10,7 +10,7 @@ import org.springframework.security.access.AccessDeniedException;
 import java.util.List;
 
 public interface VPMService {
-    User getCurrentUser();
+    User getCurrentUser(String token);
     
     User getUser(String username);
     
@@ -28,7 +28,7 @@ public interface VPMService {
     
     RepoActionResult deletePackage(String packageId, String author);
     
-    PackageJson uploadPackage(byte[] file) throws AccessDeniedException;
+    PackageJson uploadPackage(String token, byte[] file) throws AccessDeniedException, NoSuchUserException;
     
     byte[] getPackageZip(String pkg, int major, int minor, int revision);
     

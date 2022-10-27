@@ -11,12 +11,11 @@ import net.m127.vpm.repo.jpa.entity.PackageVersion;
 import net.m127.vpm.repo.jpa.entity.User;
 import net.m127.vpm.repo.json.PackageJson;
 import net.m127.vpm.repo.json.RepoListing;
+import net.m127.vpm.repo.jwt.TokenManager;
 import net.m127.vpm.repo.permission.AutoPackageCreation;
 import net.m127.vpm.repo.util.ZipUtil;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.access.AccessDeniedException;
-import org.springframework.security.core.Authentication;
-import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 
 import javax.transaction.Transactional;
@@ -30,6 +29,7 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 public class VPMServiceImpl implements VPMService {
     private final UserRepository users;
+    private final TokenManager tokenManager;
     private final RepoListingFactory repoListingFactory;
     private final PackageRepository packages;
     private final PackageVersionRepository packageVersions;
@@ -38,13 +38,12 @@ public class VPMServiceImpl implements VPMService {
     protected AutoPackageCreation automaticPackageCreation;
     
     @Override
-    public User getCurrentUser() {
-        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
-        if (auth.isAuthenticated()) {
-            return getUser(auth.getName());
-        } else {
-            return null;
-        }
+    public User getCurrentUser(String token) {
+        if(token == null) return null;
+        String creator = tokenManager.getUsernameFromValidToken(token);
+        if(creator == null) return null;
+        if(!users.existsByName(creator)) return null;
+        return users.findByName(creator);
     }
     
     @Override
@@ -95,7 +94,9 @@ public class VPMServiceImpl implements VPMService {
     }
     
     @Override
-    public PackageJson uploadPackage(byte[] zipFile) throws AccessDeniedException {
+    public PackageJson uploadPackage(String token, byte[] zipFile) throws AccessDeniedException, NoSuchUserException {
+        final User currentUser = getCurrentUser(token);
+        if(currentUser == null) throw new NoSuchUserException();
         PackageJson json = zipUtil.getPackageJsonFromZip(zipFile);
         Package pkg;
         if(!packages.existsByName(json.name())) {
@@ -103,7 +104,7 @@ public class VPMServiceImpl implements VPMService {
             pkg = new Package(
                 null,
                 json.name(),
-                getCurrentUser(),
+                getCurrentUser(token),
                 json.displayName(),
                 json.description(),
                 null
@@ -112,7 +113,7 @@ public class VPMServiceImpl implements VPMService {
         } else {
             pkg = packages.findByName(json.name());
         }
-        if (!pkg.getAuthor().equals(getCurrentUser())) {
+        if (!pkg.getAuthor().equals(getCurrentUser(token))) {
             throw new AccessDeniedException("Package not owned by User");
         }
         if (packageVersions.existsByPkgAndMajorAndMinorAndRevision(
