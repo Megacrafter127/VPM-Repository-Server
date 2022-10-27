@@ -9,6 +9,6 @@ public record PackageMetaData(
     PackageAuthor author
 ) {
     public PackageMetaData(Package pkg) {
-        this(pkg.getId(), pkg.getDisplayName(), pkg.getDescription(), new PackageAuthor(pkg.getAuthor()));
+        this(pkg.getName(), pkg.getDisplayName(), pkg.getDescription(), new PackageAuthor(pkg.getAuthor()));
     }
 }

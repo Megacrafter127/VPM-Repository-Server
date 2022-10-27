@@ -1,0 +1,31 @@
+spring:
+  datasource:
+    url: "jdbc:${DATABASE_URL}"
+    username: "${PGUSER}"
+    password: "${PGPASSWORD}"
+  jpa:
+    hibernate:
+      ddl-auto: "validate"
+    properties:
+      hibernate:
+        dialect: "org.hibernate.dialect.PostgreSQLDialect"
+    show-sql: "true"
+  flyway:
+    validate-migration-naming: "true"
+
+jwt:
+  tokenLifetime: "36000"
+  secret: "INeedABetterSecret"
+
+vpm:
+  repository:
+    name: "VPM Repository"
+    author: "Unknown"
+
+permission:
+  account:
+    creation: "any"
+  package:
+    creation:
+      manual: "any"
+      automatic: "any"

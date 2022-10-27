@@ -2,10 +2,10 @@ package net.m127.vpm.repo.json;
 
 import net.m127.vpm.repo.jpa.entity.PackageDependency;
 import net.m127.vpm.repo.jpa.entity.PackageVersion;
-import net.m127.vpm.repo.jpa.entity.SemVersion;
 
 import java.util.Collections;
 import java.util.Map;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 public record PackageJson(
@@ -20,24 +20,31 @@ public record PackageJson(
 ) {
     public PackageJson(PackageVersion version, String urlPart) {
         this(
-            version.getId().getPkg().getId(),
-            version.getId().getVersion(),
-            version.getId().getPkg().getDisplayName(),
-            version.getId().getPkg().getDescription(),
-            new PackageAuthor(version.getId().getPkg().getAuthor()),
-            String.format("%s/%s/%s.zip",
+            version.getPkg().getName(),
+            new SemVersion(
+                version.getMajor(),
+                version.getMinor(),
+                version.getRevision()
+            ),
+            version.getPkg().getDisplayName(),
+            version.getPkg().getDescription(),
+            new PackageAuthor(version.getPkg().getAuthor()),
+            String.format("%s/%s/%d.%d.%d.zip",
                           urlPart,
-                          version.getId().getPkg().getId(),
-                          version.getId().getVersion().toString()
+                          version.getPkg().getId(),
+                          version.getMajor(),
+                          version.getMinor(),
+                          version.getRevision()
             ),
             Collections.emptyMap(),
             version
                 .getDependencies()
-                .values()
+                .entrySet()
                 .stream()
                 .collect(Collectors.toUnmodifiableMap(
-                    dep -> dep.getId().getDependency(),
-                    PackageDependency::getVersion
+                    Map.Entry::getKey,
+                    ((Function<PackageDependency, String>)PackageDependency::getVersion)
+                        .compose(Map.Entry::getValue)
                 ))
         );
     }

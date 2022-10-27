@@ -1,8 +1,7 @@
 package net.m127.vpm.repo.service;
 
 import net.m127.vpm.repo.jpa.entity.Package;
-import net.m127.vpm.repo.jpa.entity.PackageVersion;
-import net.m127.vpm.repo.jpa.entity.SemVersion;
+import net.m127.vpm.repo.json.SemVersion;
 import net.m127.vpm.repo.json.PackageAuthor;
 import net.m127.vpm.repo.json.PackageJson;
 import net.m127.vpm.repo.json.PackageListing;
@@ -11,6 +10,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 import java.util.Map;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
 
@@ -30,7 +30,7 @@ public class RepoListingFactoryImpl implements RepoListingFactory {
             url,
             StreamSupport.stream(packages.spliterator(), false)
                          .collect(Collectors.toUnmodifiableMap(
-                             Package::getId,
+                             Package::getName,
                              pkg -> createPackageListing(pkg, urlPart)
                          ))
         );
@@ -39,17 +39,14 @@ public class RepoListingFactoryImpl implements RepoListingFactory {
     private PackageListing createPackageListing(Package pkg, final String urlPart) {
         Map<SemVersion, PackageJson> versionMap = pkg
             .getVersions()
-            .entrySet()
             .stream()
+            .map(v -> new PackageJson(v, urlPart))
             .collect(Collectors.toUnmodifiableMap(
-                Map.Entry::getKey,
-                e -> {
-                    PackageVersion version = e.getValue();
-                    return new PackageJson(version, urlPart);
-                }
+                PackageJson::version,
+                Function.identity()
             ));
         return new PackageListing(
-            pkg.getId(),
+            pkg.getName(),
             pkg.getDisplayName(),
             pkg.getDescription(),
             new PackageAuthor(pkg.getAuthor()),

@@ -1,37 +1,26 @@
 package net.m127.vpm.repo;
 
+import lombok.RequiredArgsConstructor;
 import net.m127.vpm.repo.json.PackageJson;
 import net.m127.vpm.repo.json.PackageMetaData;
 import net.m127.vpm.repo.json.RepoListing;
-import net.m127.vpm.repo.service.FileService;
 import net.m127.vpm.repo.service.VPMService;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.core.io.ByteArrayResource;
 import org.springframework.core.io.Resource;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.web.bind.annotation.*;
-import org.springframework.web.multipart.MultipartFile;
 
 import javax.servlet.http.HttpServletRequest;
-import java.io.FileNotFoundException;
-import java.io.IOException;
 import java.net.URI;
-import java.nio.file.FileAlreadyExistsException;
 import java.util.Optional;
-import java.util.zip.ZipException;
 
 @RestController
 @RequestMapping("/vpm")
-public class RepositoryController {
-    @Autowired
-    protected VPMService vpmService;
-    @Autowired
-    protected FileService fileService;
-    
-    private final Logger logger = LoggerFactory.getLogger(RepositoryController.class);
+@RequiredArgsConstructor
+public class VpmRepositoryController {
+    private final VPMService vpmService;
     
     @GetMapping("/index.json")
     public RepoListing getIndex(HttpServletRequest request) {
@@ -43,7 +32,7 @@ public class RepositoryController {
         HttpServletRequest request,
         @PathVariable String packageId,
         @RequestBody PackageMetaData pkg
-    ) throws IOException {
+    ) {
         return switch (vpmService.createPackage(
             packageId,
             request.getUserPrincipal().getName(),
@@ -57,9 +46,9 @@ public class RepositoryController {
     }
     
     @PostMapping("/packages")
-    public ResponseEntity<?> uploadVersion(HttpServletRequest request, @RequestParam MultipartFile files) {
+    public ResponseEntity<?> uploadVersion(HttpServletRequest request, @RequestBody byte[] file) {
         try{
-            PackageJson result = vpmService.uploadPackage(files);
+            PackageJson result = vpmService.uploadPackage(file);
             return ResponseEntity.created(
                 URI.create(String.format(
                     "%s/%s/%s.zip",
@@ -70,15 +59,6 @@ public class RepositoryController {
             ).build();
         } catch(AccessDeniedException ex) {
             return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
-        } catch(FileNotFoundException ex) {
-            return ResponseEntity.notFound().build();
-        } catch(FileAlreadyExistsException ex) {
-            return ResponseEntity.status(HttpStatus.CONFLICT).build();
-        } catch(ZipException ex) {
-            return ResponseEntity.unprocessableEntity().build();
-        } catch(IOException ex) {
-            logger.error("Error writing package zip file", ex);
-            return ResponseEntity.internalServerError().build();
         }
     }
     
@@ -91,7 +71,7 @@ public class RepositoryController {
     public ResponseEntity<?> deletePackage(
         HttpServletRequest request,
         @PathVariable String packageId
-    ) throws IOException {
+    ) {
         return switch (vpmService.deletePackage(packageId, request.getUserPrincipal().getName())) {
             case OK -> ResponseEntity.accepted().build();
             case EXISTENCE -> ResponseEntity.notFound().build();
@@ -99,17 +79,17 @@ public class RepositoryController {
         };
     }
     
-    @GetMapping("/packages/{packageId}/{packageVersion}.zip")
-    public ResponseEntity<Resource> getZip(@PathVariable String packageId, @PathVariable String packageVersion) {
-        Resource file = null;
-        try{
-            file = fileService.getPackageVersion(packageId, packageVersion);
-        } catch(IOException ex) {
-            logger.error("Error reading package zip file", ex);
-        }
+    @GetMapping("/packages/{packageId}/{major}.{minor}.{revision}.zip")
+    public ResponseEntity<? extends Resource> getZip(
+        @PathVariable String packageId,
+        @PathVariable int major,
+        @PathVariable int minor,
+        @PathVariable int revision
+    ) {
         return ResponseEntity.of(
             Optional
-                .ofNullable(file)
+                .ofNullable(vpmService.getPackageZip(packageId, major, minor, revision))
+                .map(ByteArrayResource::new)
                 .filter(Resource::exists)
         );
     }

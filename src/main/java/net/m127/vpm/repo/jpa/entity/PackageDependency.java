@@ -1,35 +1,33 @@
 package net.m127.vpm.repo.jpa.entity;
 
+import lombok.AllArgsConstructor;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
+
 import javax.persistence.*;
 
 @Entity
-@Table(name="dependencies")
+@Table(name="package_dependencies")
+@IdClass(PackageDependencyRef.class)
+@Getter
+@Setter
+@NoArgsConstructor
+@AllArgsConstructor
 public class PackageDependency {
-    @EmbeddedId
-    private PackageDependencyRef id;
-    @Column(name = "dependency_version")
+    @Id
+    @ManyToOne(optional = false)
+    @JoinColumn(
+        name = "dependent",
+        nullable = false,
+        updatable = false
+    )
+    private PackageVersion dependent;
+    
+    @Id
+    @Column(name = "dependency", nullable = false, updatable = false)
+    private String dependency;
+    
+    @Column(name = "dependency_version", nullable = false)
     private String version;
-    
-    public PackageDependency(PackageDependencyRef id, String version) {
-        this.id = id;
-        this.version = version;
-    }
-    
-    public PackageDependency() {}
-    
-    public PackageDependencyRef getId() {
-        return id;
-    }
-    
-    public void setId(PackageDependencyRef id) {
-        this.id = id;
-    }
-    
-    public String getVersion() {
-        return version;
-    }
-    
-    public void setVersion(String version) {
-        this.version = version;
-    }
 }

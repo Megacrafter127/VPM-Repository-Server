@@ -1,14 +1,26 @@
 package net.m127.vpm.repo.jpa.entity;
 
+import lombok.AllArgsConstructor;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
+
 import javax.persistence.*;
-import java.util.SortedMap;
+import java.util.List;
 
 @Entity
 @Table(name = "packages")
+@Getter
+@Setter
+@NoArgsConstructor
+@AllArgsConstructor
 public class Package {
     @Id
     @Column(name = "id", nullable = false, updatable = false)
-    private String id;
+    private Long id;
+    
+    @Column(name = "name", nullable = false, updatable = false)
+    private String name;
     
     @ManyToOne(optional = false)
     @JoinColumn(name = "author", nullable = false)
@@ -20,56 +32,7 @@ public class Package {
     @Column(name = "description")
     private String description;
     
-    @OneToMany(mappedBy = "id.pkg")
-    @OrderBy
-    private SortedMap<SemVersion, PackageVersion> versions;
-    
-    public Package() {}
-    
-    public Package(String id, User author, String displayName, String description) {
-        this.id = id;
-        this.author = author;
-        this.displayName = displayName;
-        this.description = description;
-    }
-    
-    public String getId() {
-        return id;
-    }
-    
-    public void setId(String id) {
-        this.id = id;
-    }
-    
-    public User getAuthor() {
-        return author;
-    }
-    
-    public void setAuthor(User author) {
-        this.author = author;
-    }
-    
-    public String getDisplayName() {
-        return displayName;
-    }
-    
-    public void setDisplayName(String displayName) {
-        this.displayName = displayName;
-    }
-    
-    public String getDescription() {
-        return description;
-    }
-    
-    public void setDescription(String description) {
-        this.description = description;
-    }
-    
-    public SortedMap<SemVersion, PackageVersion> getVersions() {
-        return versions;
-    }
-    
-    public void setVersions(SortedMap<SemVersion, PackageVersion> versions) {
-        this.versions = versions;
-    }
+    @OneToMany(mappedBy = "pkg",targetEntity = PackageVersion.class)
+    @OrderBy("version DESC")
+    private List<PackageVersion> versions;
 }

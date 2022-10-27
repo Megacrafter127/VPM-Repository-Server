@@ -1,37 +1,46 @@
 package net.m127.vpm.repo.jpa.entity;
 
+import lombok.AllArgsConstructor;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
+import net.m127.vpm.repo.json.SemVersion;
+
 import javax.persistence.*;
 import java.util.Map;
 
 @Entity
 @Table(name = "package_versions")
+@Getter
+@Setter
+@NoArgsConstructor
+@AllArgsConstructor
 public class PackageVersion {
-    @EmbeddedId
-    private PackageVersionRef id;
+    @Id
+    @Column(name = "id", updatable = false, nullable = false)
+    private Long id;
     
-    @OneToMany(mappedBy = "id.dependent")
-    @MapKeyColumn(name = "dependency")
+    @ManyToOne(optional = false)
+    @JoinColumn(name = "package", updatable = false, nullable = false)
+    private Package pkg;
+    
+    @Column(name = "version_major", nullable = false, updatable = false)
+    private int major;
+    @Column(name = "version_minor", nullable = false, updatable = false)
+    private int minor;
+    @Column(name = "version_revision", nullable = false, updatable = false)
+    private int revision;
+    
+    @OneToMany(mappedBy = "dependent")
+    @MapKey(name = "dependency")
     private Map<String, PackageDependency> dependencies;
     
-    public PackageVersion(PackageVersionRef id) {
-        this.id = id;
-    }
+    @OneToOne(fetch = FetchType.LAZY, cascade = CascadeType.ALL, orphanRemoval = true)
+    @JoinColumn(name = "blob", nullable = false)
+    private PackageBlob blob;
     
-    public PackageVersion() {}
-    
-    public PackageVersionRef getId() {
-        return id;
-    }
-    
-    public void setId(PackageVersionRef id) {
-        this.id = id;
-    }
-    
-    public Map<String, PackageDependency> getDependencies() {
-        return dependencies;
-    }
-    
-    public void setDependencies(Map<String, PackageDependency> dependencies) {
-        this.dependencies = dependencies;
+    public PackageVersion(Package pkg, SemVersion version, byte[] zipFile) {
+        this(null, pkg, version.major(), version.minor(), version.revision(), null, null);
+        this.blob = new PackageBlob(null, this, zipFile);
     }
 }
