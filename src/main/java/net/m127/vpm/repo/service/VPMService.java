@@ -7,6 +7,8 @@ import net.m127.vpm.repo.json.PackageJson;
 import net.m127.vpm.repo.json.RepoListing;
 import org.springframework.security.access.AccessDeniedException;
 
+import java.io.IOException;
+import java.io.InputStream;
 import java.util.List;
 
 public interface VPMService {
@@ -28,7 +30,8 @@ public interface VPMService {
     
     RepoActionResult deletePackage(String packageId, String author);
     
-    PackageJson uploadPackage(String token, byte[] file) throws AccessDeniedException, NoSuchUserException;
+    PackageJson uploadPackage(String token, String url, InputStream file)
+        throws AccessDeniedException, NoSuchUserException, IOException;
     
     byte[] getPackageZip(String pkg, int major, int minor, int revision);
     

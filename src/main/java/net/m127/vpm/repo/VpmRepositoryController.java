@@ -14,6 +14,8 @@ import org.springframework.security.access.AccessDeniedException;
 import org.springframework.web.bind.annotation.*;
 
 import javax.servlet.http.HttpServletRequest;
+import java.io.IOException;
+import java.io.InputStream;
 import java.net.URI;
 import java.util.Optional;
 
@@ -47,25 +49,20 @@ public class VpmRepositoryController {
     }
     
     @PostMapping("/packages")
-    public ResponseEntity<?> uploadVersion(
+    public ResponseEntity<PackageJson> uploadVersion(
         HttpServletRequest request,
         @CookieValue(name = UserController.LOGIN_COOKIE, required = false) String token,
-        @RequestBody byte[] file
+        @RequestBody InputStream file
     ) {
         try{
-            PackageJson result = vpmService.uploadPackage(token, file);
-            return ResponseEntity.created(
-                URI.create(String.format(
-                    "%s/%s/%s.zip",
-                    request.getRequestURI(),
-                    result.name(),
-                    result.version()
-                ))
-            ).build();
+            PackageJson result = vpmService.uploadPackage(token, request.getRequestURI(), file);
+            return ResponseEntity.created(URI.create(result.url())).body(result);
         } catch(AccessDeniedException ex) {
             return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
         } catch (NoSuchUserException e) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+        } catch (IOException e) {
+            return ResponseEntity.internalServerError().build();
         }
     }
     

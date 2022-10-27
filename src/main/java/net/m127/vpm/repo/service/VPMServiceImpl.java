@@ -19,6 +19,9 @@ import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
 
 import javax.transaction.Transactional;
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
 import java.util.List;
 import java.util.Map;
 import java.util.NoSuchElementException;
@@ -39,10 +42,10 @@ public class VPMServiceImpl implements VPMService {
     
     @Override
     public User getCurrentUser(String token) {
-        if(token == null) return null;
+        if (token == null) return null;
         String creator = tokenManager.getUsernameFromValidToken(token);
-        if(creator == null) return null;
-        if(!users.existsByName(creator)) return null;
+        if (creator == null) return null;
+        if (!users.existsByName(creator)) return null;
         return users.findByName(creator);
     }
     
@@ -94,13 +97,22 @@ public class VPMServiceImpl implements VPMService {
     }
     
     @Override
-    public PackageJson uploadPackage(String token, byte[] zipFile) throws AccessDeniedException, NoSuchUserException {
+    public PackageJson uploadPackage(String token, final String url, InputStream file)
+        throws AccessDeniedException, NoSuchUserException, IOException {
         final User currentUser = getCurrentUser(token);
-        if(currentUser == null) throw new NoSuchUserException();
-        PackageJson json = zipUtil.getPackageJsonFromZip(zipFile);
+        if (currentUser == null) throw new NoSuchUserException();
+        ByteArrayOutputStream buffer = new ByteArrayOutputStream();
+        PackageJson json = zipUtil.alterPackageJSONInFlight(
+            file,
+            buffer,
+            j -> j.withURL(repoListingFactory.toPackageURL(url, j.name(), j.version()))
+        );
         Package pkg;
-        if(!packages.existsByName(json.name())) {
-            if(automaticPackageCreation != AutoPackageCreation.ANY) throw new NoSuchElementException("Package not registered");
+        if (!packages.existsByName(json.name())) {
+            if (automaticPackageCreation != AutoPackageCreation.ANY) {
+                throw new NoSuchElementException(
+                    "Package not registered");
+            }
             pkg = new Package(
                 null,
                 json.name(),
@@ -124,8 +136,8 @@ public class VPMServiceImpl implements VPMService {
         )) {
             throw new IllegalStateException("Specified version already exists");
         }
-        PackageVersion version = new PackageVersion(pkg, json.version(), zipFile);
-        if(json.vpmDependencies() != null) {
+        PackageVersion version = new PackageVersion(pkg, json.version(), buffer.toByteArray());
+        if (json.vpmDependencies() != null) {
             version.setDependencies(
                 json.vpmDependencies()
                     .entrySet()

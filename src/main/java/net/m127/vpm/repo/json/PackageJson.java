@@ -48,4 +48,8 @@ public record PackageJson(
                 ))
         );
     }
+    
+    public PackageJson withURL(String url) {
+        return new PackageJson(name, version, displayName, description, author, url, dependencies, vpmDependencies);
+    }
 }

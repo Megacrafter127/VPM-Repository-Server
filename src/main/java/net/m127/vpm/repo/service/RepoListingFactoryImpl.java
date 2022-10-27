@@ -22,6 +22,15 @@ public class RepoListingFactoryImpl implements RepoListingFactory {
     protected String author;
     
     @Override
+    public String toPackageURL(String urlPart, String name, SemVersion version) {
+        return String.format("%s/%s/%s.zip",
+                             urlPart,
+                             name,
+                             version
+        );
+    }
+    
+    @Override
     public RepoListing createListing(String url, Iterable<Package> packages) {
         final String urlPart = url.replaceFirst("index\\.json$", "packages");
         return new RepoListing(
