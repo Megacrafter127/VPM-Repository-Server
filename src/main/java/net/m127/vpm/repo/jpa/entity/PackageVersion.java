@@ -17,6 +17,7 @@ import java.util.Map;
 @AllArgsConstructor
 public class PackageVersion {
     @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "id", updatable = false, nullable = false)
     private Long id;
     

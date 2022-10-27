@@ -16,6 +16,7 @@ import java.util.List;
 @AllArgsConstructor
 public class Package {
     @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "id", nullable = false, updatable = false)
     private Long id;
     
