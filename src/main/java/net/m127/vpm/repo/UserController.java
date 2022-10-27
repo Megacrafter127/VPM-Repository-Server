@@ -16,7 +16,7 @@ import javax.servlet.http.Cookie;
 import javax.servlet.http.HttpServletResponse;
 
 @RestController
-@RequestMapping("/user")
+@RequestMapping("/")
 @RequiredArgsConstructor
 public class UserController {
     private final UserService users;
@@ -30,7 +30,7 @@ public class UserController {
         return cookie;
     }
     
-    @PostMapping("")
+    @PostMapping("/register")
     public ResponseEntity<TokenResponse> createUser(
         @CookieValue(name = LOGIN_COOKIE, required = false) String creatorToken,
         @RequestBody UserCreateRequest request,
@@ -47,7 +47,7 @@ public class UserController {
         }
     }
     
-    @GetMapping("")
+    @PostMapping("/login")
     public ResponseEntity<TokenResponse> loginUser(
         @RequestBody TokenRequest request,
         HttpServletResponse response
