@@ -3,7 +3,10 @@ package net.m127.vpm.repo.util;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import net.m127.vpm.repo.json.PackageJson;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
+import org.springframework.util.StreamUtils;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -17,6 +20,8 @@ import java.util.zip.ZipOutputStream;
 @RequiredArgsConstructor
 public class ZipUtil {
     private final ObjectMapper mapper;
+    
+    private final Logger log = LoggerFactory.getLogger(ZipUtil.class);
     
     public PackageJson alterPackageJSONInFlight(
         InputStream in,
@@ -33,17 +38,21 @@ public class ZipUtil {
             zipInputStream.closeEntry(),
                 entry = zipInputStream.getNextEntry()
         ) {
-            zipOutputStream.putNextEntry(entry);
+            log.debug("Processed {} Entry: {}", entry.isDirectory() ? "Directory" : "File", entry.getName());
+            if(entry.isDirectory()) continue;
             if ("package.json".equalsIgnoreCase(entry.getName())) {
+                ZipEntry nentry = new ZipEntry(entry.getName());
+                nentry.setComment(entry.getComment());
+                nentry.setExtra(entry.getExtra());
+                nentry.setMethod(entry.getMethod());
+                nentry.setCreationTime(entry.getCreationTime());
+                zipOutputStream.putNextEntry(nentry);
                 json = map.apply(mapper.readValue(zipInputStream, PackageJson.class));
                 mapper.writeValue(zipOutputStream, json);
             }
             else {
-                byte[] transfer = new byte[4096];
-                int h;
-                while(-1 != (h = zipInputStream.read(transfer))) {
-                    zipOutputStream.write(transfer, 0, h);
-                }
+                zipOutputStream.putNextEntry(entry);
+                StreamUtils.copy(zipInputStream, zipOutputStream);
             }
             zipOutputStream.closeEntry();
         }

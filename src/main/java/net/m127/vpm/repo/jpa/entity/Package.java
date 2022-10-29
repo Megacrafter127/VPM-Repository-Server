@@ -33,7 +33,7 @@ public class Package {
     @Column(name = "description")
     private String description;
     
-    @OneToMany(mappedBy = "pkg",targetEntity = PackageVersion.class)
+    @OneToMany(mappedBy = "pkg", cascade = CascadeType.ALL)
     @OrderBy("version_major DESC, version_minor DESC, version_revision DESC")
     private List<PackageVersion> versions;
 }

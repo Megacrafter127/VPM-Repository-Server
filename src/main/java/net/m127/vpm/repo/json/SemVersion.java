@@ -1,7 +1,6 @@
 package net.m127.vpm.repo.json;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
-import com.fasterxml.jackson.annotation.JsonKey;
 import com.fasterxml.jackson.annotation.JsonValue;
 
 import java.util.Comparator;
@@ -33,7 +32,6 @@ public record SemVersion(int major, int minor, int revision) implements Comparab
     }
     
     @JsonValue
-    @JsonKey
     @Override
     public String toString() {
         return String.format("%d.%d.%d", major, minor, revision);

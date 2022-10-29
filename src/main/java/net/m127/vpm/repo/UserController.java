@@ -8,6 +8,7 @@ import net.m127.vpm.repo.service.EmailTakenException;
 import net.m127.vpm.repo.service.NoSuchUserException;
 import net.m127.vpm.repo.service.UserService;
 import net.m127.vpm.repo.service.UsernameTakenException;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -23,9 +24,12 @@ public class UserController {
     
     public static final String LOGIN_COOKIE = "login";
     
-    private static Cookie createTokenCookie(TokenResponse token) {
+    @Value("${insecure}")
+    protected boolean insecure;
+    
+    private Cookie createTokenCookie(TokenResponse token) {
         Cookie cookie = new Cookie(LOGIN_COOKIE, token.token());
-        cookie.setSecure(true);
+        cookie.setSecure(!insecure);
         cookie.setMaxAge((int) ((token.expires()-System.currentTimeMillis()) / 1000));
         return cookie;
     }

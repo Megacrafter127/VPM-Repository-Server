@@ -26,9 +26,11 @@ public interface VPMService {
     
     List<Package> getAllPackages();
     
-    RepoActionResult createPackage(String packageId, String author, String displayName, String description);
+    RepoActionResult createPackage(String packageId, String token, String displayName, String description);
     
-    RepoActionResult deletePackage(String packageId, String author);
+    RepoActionResult deletePackage(String packageId, String token);
+    
+    RepoActionResult deletePackageVersion(String packageId, int major, int minor, int revision, String token);
     
     PackageJson uploadPackage(String token, String url, InputStream file)
         throws AccessDeniedException, NoSuchUserException, IOException;

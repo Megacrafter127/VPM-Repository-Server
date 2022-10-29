@@ -6,15 +6,15 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 import javax.persistence.*;
+import java.io.Serializable;
 
 @Entity
-@Table(name="package_dependencies")
-@IdClass(PackageDependencyRef.class)
+@Table(name = "package_dependencies")
 @Getter
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
-public class PackageDependency {
+public class PackageDependency implements Serializable {
     @Id
     @ManyToOne(optional = false)
     @JoinColumn(

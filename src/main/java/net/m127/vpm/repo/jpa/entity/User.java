@@ -32,6 +32,6 @@ public class User {
     @Column(name = "password", nullable = false)
     private String password;
     
-    @OneToMany(mappedBy = "author")
+    @OneToMany(mappedBy = "author", cascade = CascadeType.ALL)
     private List<Package> userPackages;
 }

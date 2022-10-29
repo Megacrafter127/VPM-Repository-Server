@@ -32,7 +32,7 @@ public class PackageVersion {
     @Column(name = "version_revision", nullable = false, updatable = false)
     private int revision;
     
-    @OneToMany(mappedBy = "dependent")
+    @OneToMany(mappedBy = "dependent", cascade = CascadeType.ALL)
     @MapKey(name = "dependency")
     private Map<String, PackageDependency> dependencies;
     

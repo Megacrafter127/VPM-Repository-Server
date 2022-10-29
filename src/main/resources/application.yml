@@ -12,6 +12,11 @@ spring:
     show-sql: "true"
   flyway:
     validate-migration-naming: "true"
+  jackson:
+    generator:
+      AUTO_CLOSE_TARGET: "false"
+    parser:
+      AUTO_CLOSE_SOURCE: "false"
 
 jwt:
   tokenLifetime: "36000"

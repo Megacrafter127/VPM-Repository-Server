@@ -31,7 +31,7 @@ public record PackageJson(
             new PackageAuthor(version.getPkg().getAuthor()),
             String.format("%s/%s/%d.%d.%d.zip",
                           urlPart,
-                          version.getPkg().getId(),
+                          version.getPkg().getName(),
                           version.getMajor(),
                           version.getMinor(),
                           version.getRevision()
