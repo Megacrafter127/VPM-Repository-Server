@@ -24,7 +24,7 @@ public class UserController {
     
     public static final String LOGIN_COOKIE = "login";
     
-    @Value("${secure}")
+    @Value("${jwt.secure}")
     protected boolean secure;
     
     private Cookie createTokenCookie(TokenResponse token) {
