@@ -24,12 +24,12 @@ public class UserController {
     
     public static final String LOGIN_COOKIE = "login";
     
-    @Value("${insecure}")
-    protected boolean insecure;
+    @Value("${secure}")
+    protected boolean secure;
     
     private Cookie createTokenCookie(TokenResponse token) {
         Cookie cookie = new Cookie(LOGIN_COOKIE, token.token());
-        cookie.setSecure(!insecure);
+        cookie.setSecure(secure);
         cookie.setMaxAge((int) ((token.expires()-System.currentTimeMillis()) / 1000));
         return cookie;
     }
