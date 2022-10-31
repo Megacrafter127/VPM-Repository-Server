@@ -32,6 +32,15 @@ public class User {
     @Column(name = "password", nullable = false)
     private String password;
     
+    @Column(name = "validated", nullable = false)
+    private boolean validated;
+    
+    @Column(name = "approved", nullable = false)
+    private boolean approved;
+    
+    @Column(name = "admin", nullable = false)
+    private boolean admin;
+    
     @OneToMany(mappedBy = "author", cascade = CascadeType.ALL)
     private List<Package> userPackages;
 }
