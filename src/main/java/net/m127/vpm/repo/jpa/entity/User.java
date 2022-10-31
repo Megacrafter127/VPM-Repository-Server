@@ -35,12 +35,17 @@ public class User {
     @Column(name = "validated", nullable = false)
     private boolean validated;
     
-    @Column(name = "approved", nullable = false)
-    private boolean approved;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "approver")
+    private User approver;
     
     @Column(name = "admin", nullable = false)
     private boolean admin;
     
     @OneToMany(mappedBy = "author", cascade = CascadeType.ALL)
     private List<Package> userPackages;
+    
+    public boolean isApproved() {
+        return approver != null && approver.isAdmin();
+    }
 }

@@ -2,7 +2,6 @@ package net.m127.vpm.repo.service;
 
 import net.m127.vpm.repo.RepoActionResult;
 import net.m127.vpm.repo.jpa.entity.Package;
-import net.m127.vpm.repo.jpa.entity.User;
 import net.m127.vpm.repo.json.PackageJson;
 import net.m127.vpm.repo.json.RepoListing;
 import org.springframework.security.access.AccessDeniedException;
@@ -10,23 +9,15 @@ import org.springframework.security.access.AccessDeniedException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.List;
+import java.util.Optional;
 
 public interface VPMService {
-    User getCurrentUser(String token);
     
-    User getUser(String username);
-    
-    List<User> getUsers();
-    
-    Package getPackage(String packageId);
-    
-    User getPackageAuthor(String packageId);
-    
-    List<Package> getUserPackages(String username);
+    Optional<Package> getPackage(String packageId);
     
     List<Package> getAllPackages();
     
-    RepoActionResult createPackage(String packageId, String token, String displayName, String description);
+    RepoActionResult createPackage(String token, String packageId, String author, String displayName, String description);
     
     RepoActionResult deletePackage(String packageId, String token);
     

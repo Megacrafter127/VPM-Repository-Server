@@ -31,6 +31,5 @@ permission:
   account:
     creation: "any"
   package:
-    creation:
-      manual: "any"
-      automatic: "any"
+    upload: "approved"
+    creation: "admin"

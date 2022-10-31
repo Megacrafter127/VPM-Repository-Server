@@ -66,4 +66,22 @@ public class UserController {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
         }
     }
+    
+    @PostMapping("/approve/{username}")
+    public ResponseEntity<?> approveUser(
+        @CookieValue(name = LOGIN_COOKIE, required = false) String adminToken,
+        @PathVariable String username
+    ) {
+        try {
+            if(users.approveUser(adminToken, username)) {
+                return ResponseEntity.ok().build();
+            } else {
+                return ResponseEntity.status(HttpStatus.CONFLICT).build();
+            }
+        } catch (NoSuchUserException e) {
+            return ResponseEntity.notFound().build();
+        } catch (IllegalAccessException e) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+        }
+    }
 }

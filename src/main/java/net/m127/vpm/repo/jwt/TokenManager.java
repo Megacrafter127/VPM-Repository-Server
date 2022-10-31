@@ -4,8 +4,9 @@ import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.JwtParser;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.security.SignatureException;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.stereotype.Component;
+import org.springframework.stereotype.Service;
 
 import javax.crypto.KeyGenerator;
 import javax.crypto.SecretKey;
@@ -14,7 +15,8 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
 
-@Component
+@Service
+@Slf4j
 public class TokenManager {
     private final SecretKey jwtSecret;
     private final long tokenLifetime;
@@ -40,22 +42,17 @@ public class TokenManager {
         );
     }
     
-    public boolean validateJwtToken(String token, String username) {
-        try {
-            final Claims claims = parser.parseClaimsJws(token).getBody();
-            boolean isTokenExpired = claims.getExpiration().before(new Date());
-            return (claims.getSubject().equals(username)) && !isTokenExpired;
-        } catch(SignatureException ex) {
-            return false;
-        }
-    }
-    
     public String getUsernameFromValidToken(String token) {
         try {
             final Claims claims = parser.parseClaimsJws(token).getBody();
-            if(claims.getExpiration().before(new Date())) return null;
+            if(claims.getExpiration().before(new Date())) {
+                log.trace("Token Expired");
+                return null;
+            }
+            log.trace("Valid token for {}", claims.getSubject());
             return claims.getSubject();
         } catch(SignatureException ex) {
+            log.trace("Rejected token", ex);
             return null;
         }
     }

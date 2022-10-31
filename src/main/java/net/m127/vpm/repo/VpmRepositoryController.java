@@ -1,13 +1,12 @@
 package net.m127.vpm.repo;
 
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import net.m127.vpm.repo.json.PackageJson;
 import net.m127.vpm.repo.json.PackageMetaData;
 import net.m127.vpm.repo.json.RepoListing;
 import net.m127.vpm.repo.service.NoSuchUserException;
 import net.m127.vpm.repo.service.VPMService;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.core.io.ByteArrayResource;
 import org.springframework.core.io.Resource;
 import org.springframework.http.ContentDisposition;
@@ -24,10 +23,9 @@ import java.util.Optional;
 @RestController
 @RequestMapping("/vpm")
 @RequiredArgsConstructor
+@Slf4j
 public class VpmRepositoryController {
     private final VPMService vpmService;
-    
-    private final Logger log = LoggerFactory.getLogger(VpmRepositoryController.class);
     
     @GetMapping("/index.json")
     public RepoListing getIndex(HttpServletRequest request) {
@@ -43,8 +41,9 @@ public class VpmRepositoryController {
     ) {
         if(token == null) return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
         return switch (vpmService.createPackage(
+            token,
             packageId,
-            request.getUserPrincipal().getName(),
+            pkg.author().name(),
             pkg.displayName(),
             pkg.description()
         )) {
@@ -60,7 +59,6 @@ public class VpmRepositoryController {
         @CookieValue(name = UserController.LOGIN_COOKIE, required = false) String token,
         @RequestBody Resource file
     ) {
-        if(token == null) return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
         try {
             PackageJson result = vpmService.uploadPackage(token, request.getRequestURL().toString(), file.getInputStream());
             return ResponseEntity.created(URI.create(result.url())).body(result);
@@ -75,8 +73,11 @@ public class VpmRepositoryController {
     }
     
     @GetMapping("/packages/{packageId}")
-    public PackageMetaData getPackage(@PathVariable String packageId) {
-        return new PackageMetaData(vpmService.getPackage(packageId));
+    public ResponseEntity<PackageMetaData> getPackage(@PathVariable String packageId) {
+        return ResponseEntity.of(
+            vpmService.getPackage(packageId)
+            .map(PackageMetaData::new)
+        );
     }
     
     @DeleteMapping("/packages/{packageId}/{major}.{minor}.{revision}.zip")
