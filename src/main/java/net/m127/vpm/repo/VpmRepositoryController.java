@@ -4,6 +4,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import net.m127.vpm.repo.json.PackageJson;
 import net.m127.vpm.repo.json.PackageMetaData;
+import net.m127.vpm.repo.json.PackageMetaDataVersion;
 import net.m127.vpm.repo.json.RepoListing;
 import net.m127.vpm.repo.service.NoSuchUserException;
 import net.m127.vpm.repo.service.VPMService;
@@ -18,7 +19,9 @@ import org.springframework.web.bind.annotation.*;
 import javax.servlet.http.HttpServletRequest;
 import java.io.IOException;
 import java.net.URI;
+import java.util.List;
 import java.util.Optional;
+import java.util.stream.Stream;
 
 @RestController
 @RequestMapping("/vpm")
@@ -39,7 +42,7 @@ public class VpmRepositoryController {
         @PathVariable String packageId,
         @RequestBody PackageMetaData pkg
     ) {
-        if(token == null) return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+        if (token == null) return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
         return switch (vpmService.createPackage(
             token,
             packageId,
@@ -60,7 +63,11 @@ public class VpmRepositoryController {
         @RequestBody Resource file
     ) {
         try {
-            PackageJson result = vpmService.uploadPackage(token, request.getRequestURL().toString(), file.getInputStream());
+            PackageJson result = vpmService.uploadPackage(
+                token,
+                request.getRequestURL().toString(),
+                file.getInputStream()
+            );
             return ResponseEntity.created(URI.create(result.url())).body(result);
         } catch (AccessDeniedException ex) {
             return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
@@ -72,11 +79,24 @@ public class VpmRepositoryController {
         }
     }
     
+    @GetMapping("/mypackages")
+    public ResponseEntity<List<PackageMetaDataVersion>> getUserPackages(
+        @CookieValue(name = UserController.LOGIN_COOKIE, required = false) String token
+    ) {
+        if (token == null) return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+        return vpmService.getCurrentUserPackages(token)
+            .map(List::stream)
+            .map(s -> s.map(PackageMetaDataVersion::new))
+            .map(Stream::toList)
+            .map(ResponseEntity::ok)
+            .orElse(ResponseEntity.status(HttpStatus.UNAUTHORIZED).build());
+    }
+    
     @GetMapping("/packages/{packageId}")
     public ResponseEntity<PackageMetaData> getPackage(@PathVariable String packageId) {
         return ResponseEntity.of(
             vpmService.getPackage(packageId)
-            .map(PackageMetaData::new)
+                .map(PackageMetaData::new)
         );
     }
     
@@ -88,7 +108,7 @@ public class VpmRepositoryController {
         @PathVariable int minor,
         @PathVariable int revision
     ) {
-        if(token == null) return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+        if (token == null) return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
         return switch (vpmService.deletePackageVersion(packageId, major, minor, revision, token)) {
             case OK -> ResponseEntity.accepted().build();
             case EXISTENCE -> ResponseEntity.notFound().build();
@@ -101,7 +121,7 @@ public class VpmRepositoryController {
         @CookieValue(name = UserController.LOGIN_COOKIE, required = false) String token,
         @PathVariable String packageId
     ) {
-        if(token == null) return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+        if (token == null) return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
         return switch (vpmService.deletePackage(packageId, token)) {
             case OK -> ResponseEntity.accepted().build();
             case EXISTENCE -> ResponseEntity.notFound().build();
@@ -128,9 +148,9 @@ public class VpmRepositoryController {
                 )
             ).build();
         return Optional
-                .ofNullable(vpmService.getPackageZip(packageId, major, minor, revision))
-                .map(ByteArrayResource::new)
-                .filter(Resource::exists)
+            .ofNullable(vpmService.getPackageZip(packageId, major, minor, revision))
+            .map(ByteArrayResource::new)
+            .filter(Resource::exists)
             .map(r -> ResponseEntity
                 .ok()
                 .headers(h -> h.setContentDisposition(disposition))

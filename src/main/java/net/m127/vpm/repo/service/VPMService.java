@@ -17,6 +17,8 @@ public interface VPMService {
     
     List<Package> getAllPackages();
     
+    Optional<List<Package>> getCurrentUserPackages(String token);
+    
     RepoActionResult createPackage(String token, String packageId, String author, String displayName, String description);
     
     RepoActionResult deletePackage(String packageId, String token);

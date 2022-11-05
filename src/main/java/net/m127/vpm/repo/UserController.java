@@ -36,14 +36,30 @@ public class UserController {
     
     @PostMapping("/register")
     public ResponseEntity<TokenResponse> createUser(
-        @CookieValue(name = LOGIN_COOKIE, required = false) String creatorToken,
         @RequestBody UserCreateRequest request,
         HttpServletResponse response
     ) {
         try {
-            TokenResponse token = users.createUser(creatorToken, request.username(), request.email(), request.password());
+            TokenResponse token = users.createUser(null, request.username(), request.email(), request.password());
             response.addCookie(createTokenCookie(token));
-            return ResponseEntity.status(HttpStatus.CREATED).body(token);
+            return ResponseEntity
+                .status(HttpStatus.CREATED)
+                .body(token);
+        } catch (UsernameTakenException | EmailTakenException e) {
+            return ResponseEntity.status(HttpStatus.CONFLICT).build();
+        } catch (IllegalAccessException e) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+        }
+    }
+    
+    @PostMapping("/createUser")
+    public ResponseEntity<?> createUser(
+        @CookieValue(name = LOGIN_COOKIE, required = false) String creatorToken,
+        @RequestBody UserCreateRequest request
+    ) {
+        try {
+            users.createUser(creatorToken, request.username(), request.email(), request.password());
+            return ResponseEntity.status(HttpStatus.CREATED).build();
         } catch (UsernameTakenException | EmailTakenException e) {
             return ResponseEntity.status(HttpStatus.CONFLICT).build();
         } catch (IllegalAccessException e) {

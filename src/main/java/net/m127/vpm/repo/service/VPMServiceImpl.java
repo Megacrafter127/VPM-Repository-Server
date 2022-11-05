@@ -174,6 +174,12 @@ public class VPMServiceImpl implements VPMService {
         return json;
     }
     
+    @Override
+    public Optional<List<Package>> getCurrentUserPackages(String token) {
+        return users.getCurrentUser(token)
+            .map(User::getUserPackages);
+    }
+    
     public byte[] getPackageZip(String pkg, int major, int minor, int revision) {
         log.debug("Trying to load version {}.{}.{} of package {}", major, minor, revision, pkg);
         return packages.findByName(pkg)
